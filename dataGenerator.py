@@ -6,6 +6,7 @@ import random
 from random import randrange
 import distutils
 from distutils import util
+import os.path
 
 db = mysql.connector.connect(
     host="34.94.78.23",
@@ -173,56 +174,74 @@ def importDatạ():
 
 # USER INPUT
 
-# which file to write
-print("1. clients")
-print("2. pets")
-print("3. shelters")
-print("4. employees")
-print("5. I want to import data")
-user_file = input("Which file do you want to create? ")
-while user_file not in ["1","2","3","4","5"]:
-    user_file = input("Please select a valid option ")
-user_file = int(user_file)
+print("Welcome to the")
+print(" ____        _           ____                           _             ")
+print("|  _ \  __ _| |_ __ _   / ___| ___ _ __   ___ _ __ __ _| |_ ___  _ __ ")
+print("| | | |/ _` | __/ _` | | |  _ / _ \ '_ \ / _ \ '__/ _` | __/ _ \| '__|")
+print("| |_| | (_| | || (_| | | |_| |  __/ | | |  __/ | | (_| | || (_) | |   ")
+print("|____/ \__,_|\__\__,_|  \____|\___|_| |_|\___|_|  \__,_|\__\___/|_|   ")
+loop = True
+while loop:
+    # which file to write
+    print("\n")
+    print("1. clients")
+    print("2. pets")
+    print("3. shelters")
+    print("4. employees")
+    print("5. I want to import data")
+    print("6. Exit")
+    user_file = input("Which file do you want to create? ")
+    while user_file not in ["1", "2", "3", "4", "5", "6"]:
+        user_file = input("Please select a valid option: ")
+    user_file = int(user_file)
 
-# how many records to create
-if user_file != 5:
-    user_count = input("How many records do you want to generate? ")
-    while not user_count.isdigit():
-        user_count = input("How many records do you want to generate? ")
-    user_count = int(user_count)
+    if user_file == 6:
+        exit()
 
-if user_file == 1:
-    genClients(user_count)
-elif user_file == 2:
-    genPets(user_count)
-elif user_file == 3:
-    if user_count > 1000:
-        print("There can't be more than 1,000 shelters")
+    # how many records to create
+    if user_file != 5:
         user_count = input("How many records do you want to generate? ")
         while not user_count.isdigit():
             user_count = input("How many records do you want to generate? ")
         user_count = int(user_count)
-    genShelters(user_count)
-elif user_file == 4:
-    genEmployees(user_count)
-elif user_file == 5:
-    print("Have you generated data for all four tables yet?")
-    user_input = input("Y/N ").upper()
-    if user_input == "Y":
-        print("Are you sure that you have a clients.csv, pets.csv, shelters.csv, and employees.csv?")
+
+    if user_file == 1:
+        # genClients(user_count)
+        print("-> Clients have been generated")
+    elif user_file == 2:
+        # genPets(user_count)
+        print("--> Pets have been generated")
+    elif user_file == 3:
+        if user_count > 1000:
+            print("There can't be more than 1,000 shelters")
+            user_count = input("How many records do you want to generate? ")
+            while not user_count.isdigit():
+                user_count = input("How many records do you want to generate? ")
+            user_count = int(user_count)
+        # genShelters(user_count)
+        print("---> Shelters have been generated")
+    elif user_file == 4:
+        # genEmployees(user_count)
+        print("----> Employees have been generated")
+    elif user_file == 5:
+        print("Have you generated data for all four tables yet?")
         user_input = input("Y/N ").upper()
         if user_input == "Y":
-            print("Would you like to import the data into the database tables?")
+            print("Are you sure that you have a clients.csv, pets.csv, shelters.csv, and employees.csv?")
             user_input = input("Y/N ").upper()
-            if user_input == "Y":
-                print("Importing data...")
-                importDatạ()
+            if user_input == "Y" and os.path.isfile("clients.csv") and os.path.isfile("pets.csv") and os.path.isfile(
+                    "shelters.csv") and os.path.isfile("employees.csv"):
+                print("Would you like to import the data into the database tables?")
+                user_input = input("Y/N ").upper()
+                if user_input == "Y":
+                    print("Importing data...")
+                    # importDatạ()
+                else:
+                    print("You have chosen to not import data at this time.")
+                    exit()
             else:
-                print("You have chosen to not import data at this time.")
+                print("Files could not be found.")
                 exit()
         else:
             print("Please generate data for all four tables.")
             exit()
-    else:
-        print("Please generate data for all four tables.")
-        exit()
