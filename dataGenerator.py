@@ -206,10 +206,10 @@ while loop:
         user_count = int(user_count)
 
     if user_file == 1:
-        # genClients(user_count)
+        genClients(user_count)
         print("-> Clients have been generated")
     elif user_file == 2:
-        # genPets(user_count)
+        genPets(user_count)
         print("--> Pets have been generated")
     elif user_file == 3:
         if user_count > 1000:
@@ -218,10 +218,10 @@ while loop:
             while not user_count.isdigit():
                 user_count = input("How many records do you want to generate? ")
             user_count = int(user_count)
-        # genShelters(user_count)
+        genShelters(user_count)
         print("---> Shelters have been generated")
     elif user_file == 4:
-        # genEmployees(user_count)
+        genEmployees(user_count)
         print("----> Employees have been generated")
     elif user_file == 5:
         print("Have you generated data for all four tables yet?")
@@ -235,7 +235,9 @@ while loop:
                 user_input = input("Y/N ").upper()
                 if user_input == "Y":
                     print("Importing data...")
-                    # importDatạ()
+                    importDatạ()
+                    print("Success!")
+                    exit()
                 else:
                     print("You have chosen to not import data at this time.")
                     exit()
