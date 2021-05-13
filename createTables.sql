@@ -99,9 +99,10 @@ CREATE TABLE Adoptions(
     FOREIGN KEY (ClientID) references Clients(ClientID)
 );
 
+-- in the event of a problem, delete tha tables in the following order
 DROP TABLE Fostering, Adoptions;
 DROP TABLE ClientToEmployee, EmployeeToShelter, PetToShelter;
-DROP TABLE Clients,Employees,Pets,Shelters;
+DROP TABLE Clients, Employees, Pets, Shelters;
 
 
 
