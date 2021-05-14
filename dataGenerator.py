@@ -7,6 +7,8 @@ from random import randrange
 import distutils
 from distutils import util
 import os.path
+import logGenerator
+
 
 db = mysql.connector.connect(
     host="34.94.78.23",
@@ -170,6 +172,8 @@ def importDatạ():
                         "VALUES (%s,%s);",
                         (i, randrange(1, shelterCount)))
         db.commit()
+    # generate log data
+    logGenerator.run()
 
 
 # USER INPUT
