@@ -1,5 +1,7 @@
 import mysql.connector, string, re, datetime
 from datetime import date
+import distutils
+from distutils import util
 
 db = mysql.connector.connect(
     host="34.94.78.23",
@@ -47,7 +49,7 @@ def employeeMenu():
         if user_pick == 1:
             addClient()
         else:
-            print("Adding pet...")
+            addPet()
     elif user_pick == 3:
         print(">>RECORD UPDATE")
     elif user_pick == 4:
@@ -98,13 +100,13 @@ def addClient():
     entry[8] = input("Enter zip code: 9")
     # error check valid zip code
     zipPattern = "^\d{4}$"
-    isZip = re.match(zipPattern, entry[4])
+    isZip = re.match(zipPattern, entry[8])
     while not isZip:
         entry[8] = input("Enter last 4 digits of the zip code: 9")
         isZip = re.match(zipPattern, entry[8])
     entry[8] = "9" + entry[8]
     entry[9] = string.capwords(input("Enter occupation: "))
-    entry[10] = input("Dog or cat: ")
+    entry[10] = input("Dog or cat: ").lower()
     # error check valid preference
     while entry[10] not in ['dog', 'cat']:
         entry[10] = input("Please select dog or cat: ")
@@ -112,17 +114,67 @@ def addClient():
     # error check valid phase
     while entry[11] not in ['fostering', 'adopting']:
         entry[11] = input("Please select fostering or adopting: ")
-    # mycursor.execute("INSERT INTO Clients(FirstName, LastName, DateOfBirth, Phone, Email, "
-    #                  "Address, City, State, Zip,"
-    #                  "Occupation, Preference, Phase,"
-    #                  "Status, StatusDate)"
-    #                  "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);",
-    #                  (entry[0], entry[1], entry[2], entry[3], entry[4],
-    #                   entry[5], entry[6], entry[7], entry[8],
-    #                   entry[9], entry[10], entry[11],
-    #                   False, date.today()))
-    # db.commit()ca
+    mycursor.execute("INSERT INTO Clients(FirstName, LastName, DateOfBirth, Phone, Email, "
+                     "Address, City, State, Zip,"
+                     "Occupation, Preference, Phase,"
+                     "Status, StatusDate)"
+                     "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);",
+                     (entry[0], entry[1], entry[2], entry[3], entry[4],
+                      entry[5], entry[6], entry[7], entry[8],
+                      entry[9], entry[10], entry[11],
+                      False, date.today()))
+    db.commit()
+    print("...")
     print("Successfully added " + entry[0] + " " + entry[1])
+
+def addPet():
+    print("Adding pet...")
+    entry = [None] * 6
+    entry[0] = string.capwords(input("Enter name: "))
+    dob = input("Date of birth YYYY-MM-DD: ")
+    # error check date format
+    dobPattern = "^(\d{4})-(\d{2})-(\d{2})$"
+    isDOB = re.match(dobPattern, dob)
+    while not isDOB:
+        dob = input("Enter valid date: ")
+        isDOB = re.match(dobPattern, dob)
+    try:
+        entry[1] = datetime.datetime.strptime(dob, '%Y-%m-%d').date()
+    except ValueError:
+        print("ERROR: Your month or day is out of range. Let's try again")
+        print("\n")
+        addPet()
+    if entry[1] >= datetime.datetime.now().date():
+        print("ERROR: Pet must have been born")
+        employeeMenu()
+    entry[2] = input("Male or female: ").lower()
+    # error check gender
+    while entry[2] not in ['male', 'female']:
+        entry[2] = input("Please select male or female: ")
+    entry[3] = input("Dog or cat: ").lower()
+    # error check type
+    while entry[3] not in ['dog', 'cat']:
+        entry[3] = input("Please select dog or cat: ")
+    entry[4] = input("Does the pet have health concerns? y/n ").upper()
+    # error check health concerns
+    while entry[4] not in ['Y', 'N']:
+        entry[4] = input("Please select y/n: ").upper()
+    if entry[4] == 'Y':
+        entry[4] = False
+    else:
+        entry[4] = True
+    entry[5] = input("Fostering or adopting: ")
+    # error check valid phase
+    while entry[5] not in ['fostering', 'adopting']:
+        entry[5] = input("Please select fostering or adopting: ")
+    mycursor.execute("INSERT INTO Pets(Name, DateOfBirth, Gender,"
+                     "Type, HealthConcerns, Phase)"
+                     "VALUES (%s,%s,%s,%s,%s,%s);",
+                     (entry[0], entry[1], entry[2],
+                      entry[3], entry[4], entry[5]))
+    db.commit()
+    print("...")
+    print("Successfully added " + entry[0])
 
 
 def endApp():
