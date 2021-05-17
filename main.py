@@ -1,7 +1,6 @@
-import mysql.connector, string, re, datetime
+import mysql.connector, string, re, datetime, tabulate
 from datetime import date
-import distutils
-from distutils import util
+from tabulate import tabulate
 
 db = mysql.connector.connect(
     host="34.94.78.23",
@@ -61,9 +60,8 @@ def employeeMenu():
         user_pick = int(user_pick)
         if user_pick == 1:
             updateClient()
-        # else:
-            # updatePet()
-            # TODO: update a pet
+        else:
+            updatePet()
     elif user_pick == 4:
         print(">>ADD MATCH")
     employeeMenu()
@@ -194,13 +192,12 @@ def updateClient():
                      "FROM Clients C "
                      "JOIN ClientToEmployee CTE ON C.ClientID = CTE.ClientID "
                      "JOIN Employees E ON E.EmployeeID = CTE.EmployeeID "
-                     "WHERE E.EmployeeID = %s;" % myID)
+                     "WHERE C.Deleted = 0 and E.EmployeeID = %s;" % myID)
     myClients = mycursor.fetchall()
     clientList = []
-    print("ID   Name")
     for c in myClients:
         clientList.append(c[0])
-        print(str(c[0]) + "  " + c[1] + " " + c[2])
+    print(tabulate(myClients, headers=["ID", "Name"]))
     thisID = input("Enter the id of the client you want to update: ")
     try:
         thisID = int(thisID)
@@ -335,6 +332,7 @@ def updateClient():
                              "WHERE ClientID = %s;",
                              (entry, date.today(), thisID))
             db.commit()
+        print("...Updated")
         user_pick = input("Update another record? Y/N ").upper()
         while user_pick not in ['Y', 'N']:
             user_pick = input("Please select Y/N: ").upper()
@@ -342,6 +340,95 @@ def updateClient():
             updateClient()
         else:
             employeeMenu()
+
+def updatePet():
+    print("Here are the pets at your shelter: ")
+    mycursor.execute("SELECT P.PetID, P.Name, P.Type, P.Phase "
+                     "FROM Pets P "
+                     "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                     "JOIN EmployeeToShelter ETS on PTS.ShelterID = ETS.ShelterID "
+                     "JOIN Employees E on E.EmployeeID = ETS.EmployeeID "
+                     "WHERE P.Deleted = 0 and E.EmployeeID = %s"% myID)
+    myPets = mycursor.fetchall()
+    petList = []
+    for p in myPets:
+        petList.append(p[0])
+    print(tabulate(myPets, headers=["ID", "Name", "Type", "Phase"]))
+    thisID = input("Enter the id of the pet you want to update: ")
+    try:
+        thisID = int(thisID)
+    except ValueError:
+        print("ERROR: Client id must be numeric")
+        print("\n")
+        updateClient()
+    if not thisID in petList:
+        print("You do not have access to that pet id. Please choose an id from your shelter's list.")
+        print("\n")
+        updatePet()
+    else:
+        print("Pet information:")
+        mycursor.execute(
+            "SELECT Name, DateOfBirth, Gender, Type, HealthConcerns, Phase "
+            "FROM Pets "
+            "WHERE PetID = %s;" % thisID)
+        thisPet = mycursor.fetchall()
+        for p in thisPet:
+            thisPet = p
+        print("     Name:            " + thisPet[0])
+        print("     Date of birth:   " + (thisPet[1]).strftime("%Y-%m-%d"))
+        print("     Gender:          " + thisPet[2])
+        print("     Type:            " + thisPet[3])
+        if thisPet[4] == True:
+            status = "YES"
+        else:
+            status = "NONE"
+        print("     Health concerns: " + status)
+
+        print("     Phase:           " + thisPet[5])
+        print("Select a field to edit:")
+        print("1. Health concerns")
+        print("2. Phase")
+        print("Enter 3 to choose different client")
+        user_pick = input("Selection: ")
+        while user_pick not in ["1", "2", "3"]:
+            user_pick = input("Please select a valid option: ")
+        user_pick = int(user_pick)
+        if user_pick == 3:
+            updatePet()
+        elif user_pick == 1:
+            entry = input("Health conerns? T/F ").upper()
+            while entry not in ['T', 'F']:
+                entry = input("Please select T/F: ").upper()
+            if entry == 'F':
+                entry = False
+            else:
+                entry = True
+            mycursor.execute("UPDATE Pets "
+                             "SET HealthConcerns = %s "
+                             "WHERE PetID = %s;",
+                             (entry, thisID))
+            db.commit()
+        elif user_pick == 2:
+            entry = input("Fostering or adopting: ")
+            # error check valid phase
+            while entry not in ['fostering', 'adopting']:
+                entry = input("Please select fostering or adopting: ")
+            mycursor.execute("UPDATE Pets "
+                             "SET Phase = %s "
+                             "WHERE PetID = %s;",
+                             (entry, thisID))
+            db.commit()
+        print("...Updated")
+        user_pick = input("Update another record? Y/N ").upper()
+        while user_pick not in ['Y', 'N']:
+            user_pick = input("Please select Y/N: ").upper()
+        if user_pick == 'Y':
+            updatePet()
+        else:
+            employeeMenu()
+
+
+
 
 
 def endApp():
