@@ -137,7 +137,43 @@ def searchMenu():
             myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
             print(tabulate(mySearch, headers=myHeaders))
 
-    elif user_pick == 2:
+    elif user_pick == 2 or user_pick == 3:
+        if user_pick == 2:
+            myPhase = 'fostering'
+        else:
+            myPhase = 'adopting'
+        mycursor.execute("SELECT ClientID, FirstName, LastName, DateOfBirth, Phone, Email, "
+                         "Address, City, State, Zip, Occupation, Preference, StatusDate "
+                         "FROM Clients "
+                         "WHERE Phase = %s and Status = 0 and Deleted = 0 "
+                         "ORDER BY StatusDate;", [myPhase])
+        mySearch = mycursor.fetchall()
+        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
+                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
+        print(tabulate(mySearch, headers=myHeaders))
+
+    elif user_pick == 4:
+        mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName, C.DateOfBirth, C.Phone, C.Email, "
+                         "C.Address, C.City, C.State, C.Zip, C.Occupation, C.Preference, C.StatusDate "
+                         "FROM Clients C "
+                         "LEFT JOIN Fostering F on C.ClientID = F.ClientID "
+                         "WHERE F.ClientID is null and C.Phase = 'fostering' and C.Status = 1 and C.Deleted = 0 "
+                         "ORDER BY StatusDate;")
+        mySearch = mycursor.fetchall()
+        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
+                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
+        print(tabulate(mySearch, headers=myHeaders))
+    elif user_pick == 4:
+        mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName, C.DateOfBirth, C.Phone, C.Email, "
+                         "C.Address, C.City, C.State, C.Zip, C.Occupation, C.Preference, C.StatusDate "
+                         "FROM Clients C "
+                         "LEFT JOIN Adoptions A on C.ClientID = A.ClientID "
+                         "WHERE A.ClientID is null and C.Phase = 'adopting' and C.Status = 1 and C.Deleted = 0 "
+                         "ORDER BY StatusDate;")
+        mySearch = mycursor.fetchall()
+        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
+                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
+        print(tabulate(mySearch, headers=myHeaders))
 
     # export as csv option
     user_pick = input("Export search as csv? Y/N ").upper()
