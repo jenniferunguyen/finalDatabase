@@ -20,7 +20,7 @@ def employeeMenu():
     print(" |___|_|_|_| .__/_\___/\_, \___\___| |_| \___/_|  \__\__,_|_|")
     print("           |_|         |__/                                  ")
     print(">MAIN MENU")
-    print("1. Generate report")
+    print("1. View records")
     print("2. Create new record")
     print("3. Update a record")
     print("4. Add a match")
@@ -35,7 +35,8 @@ def employeeMenu():
         endApp()
 
     if user_pick == 1:
-        print(">>REPORTS")
+        print(">>VIEW")
+        # TODO display records; query for data; generate reports; query with group-by
     elif user_pick == 2:
         print(">>NEW RECORD")
         print("1. New client record")
@@ -64,6 +65,18 @@ def employeeMenu():
             updatePet()
     elif user_pick == 4:
         print(">>ADD MATCH")
+        print("1. New fostering")
+        print("2. New adoption")
+        user_pick = input("Please select a record type: ")
+        while user_pick not in ["1", "2"]:
+            user_pick = input("Please select a valid option: ")
+        print("\n")
+        user_pick = int(user_pick)
+        if user_pick == 1:
+            addFostering()
+        else:
+            addAdoptions()
+        # TODO soft delete, rollback
     employeeMenu()
 
 def addClient():
@@ -134,6 +147,15 @@ def addClient():
                       entry[9], entry[10], entry[11],
                       False, date.today()))
     db.commit()
+    mycursor.execute("SELECT MAX(ClientID) "
+                     "FROM Clients;")
+    myClients = mycursor.fetchall()
+    for c in myClients:
+        newClient = c[0]
+    mycursor.execute("INSERT INTO ClientToEmployee(ClientID, EmployeeID) "
+                     "VALUES (%s,%s);",
+                     (newClient, myID))
+    db.commit()
     print("...")
     print("Successfully added " + entry[0] + " " + entry[1])
 
@@ -182,6 +204,21 @@ def addPet():
                      "VALUES (%s,%s,%s,%s,%s,%s);",
                      (entry[0], entry[1], entry[2],
                       entry[3], entry[4], entry[5]))
+    db.commit()
+    mycursor.execute("SELECT MAX(PetID) "
+                     "FROM Pets;")
+    myPets = mycursor.fetchall()
+    for p in myPets:
+        newPet = p[0]
+    mycursor.execute("SELECT ShelterID "
+                     "FROM EmployeeToShelter "
+                     "WHERE EmployeeID = %s;" % myID)
+    myShelter = mycursor.fetchall()
+    for s in myShelter:
+        myShelter = s[0]
+    mycursor.execute("INSERT INTO PetToShelter(PetID, ShelterID) "
+                     "VALUES (%s,%s);",
+                     (newPet, myShelter))
     db.commit()
     print("...")
     print("Successfully added " + entry[0])
@@ -427,6 +464,7 @@ def updatePet():
         else:
             employeeMenu()
 
+# def addFostering():
 
 
 

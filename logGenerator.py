@@ -100,6 +100,8 @@ def run():
     for m in matchesA:
         mycursor.execute("UPDATE Pets SET Deleted = TRUE WHERE PetID = %s" % (m[0]))
         db.commit()
+        mycursor.execute("UPDATE PetToShelter SET Deleted = TRUE WHERE PetID = %s" % (m[0]))
+        db.commit()
 
     print("Success!")
 
