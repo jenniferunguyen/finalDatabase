@@ -1,4 +1,5 @@
 import mysql.connector, string, re, datetime, tabulate
+import csv
 from datetime import date
 from tabulate import tabulate
 
@@ -20,7 +21,7 @@ def employeeMenu():
     print(" |___|_|_|_| .__/_\___/\_, \___\___| |_| \___/_|  \__\__,_|_|")
     print("           |_|         |__/                                  ")
     print(">MAIN MENU")
-    print("1. View records")
+    print("1. Search")
     print("2. Create new record")
     print("3. Update a record")
     print("4. Add a match")
@@ -35,8 +36,7 @@ def employeeMenu():
         endApp()
 
     if user_pick == 1:
-        print(">>VIEW")
-        # TODO display records; query for data; generate reports; query with group-by
+        searchMenu()
     elif user_pick == 2:
         print(">>NEW RECORD")
         print("1. New client record")
@@ -75,9 +75,93 @@ def employeeMenu():
         if user_pick == 1:
             addFostering()
         else:
-            addAdoptions()
-        # TODO soft delete, rollback
+            addAdoption()
     employeeMenu()
+
+def searchMenu():
+    print(">>SEARCH")
+    print("1. Pets by shelter")
+    print("2. Pending fostering applications")
+    print("3. Pending adoption applications")
+    print("4. Approved fostering applications (never fostered before)")
+    print("5. Approved adoption applications (never adopted before)")
+    print("Enter 6 to return to MAIN MENU")
+    user_pick = input("Please select an action: ")
+    while user_pick not in ["1", "2", "3", "4", "5"]:
+        user_pick = input("Please select a valid option: ")
+    print("\n")
+    user_pick = int(user_pick)
+
+    if user_pick == 6:
+        employeeMenu()
+    elif user_pick == 1:
+        myShelter = input("Enter shelter ID: ")
+        while myShelter not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
+            myShelter = input("Please select a valid shelter: ")
+        print("\n")
+        myShelter = int(myShelter)
+        print("View option: ")
+        print("1. all pets")
+        print("2. all cats")
+        print("3. all dogs")
+        user_pick = input("Please select an option: ")
+        while user_pick not in ["1", "2", "3"]:
+            user_pick = input("Please select a valid option: ")
+        print("\n")
+        user_pick = int(user_pick)
+        if user_pick == 1:
+            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.Type, P.HealthConcerns, P.Phase "
+                             "FROM Pets P "
+                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
+                             "WHERE P.Deleted = 0 and S.ShelterID = %s" % myShelter)
+            mySearch = mycursor.fetchall()
+            myHeaders = ["ID", "Name", "DateOfBirth", "Type", "HealthConcerns", "Phase"]
+            print(tabulate(mySearch, headers=myHeaders))
+        elif user_pick == 2:
+            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
+                             "FROM Pets P "
+                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
+                             "WHERE P.Deleted = 0 and P.Type = 'cat' and S.ShelterID = %s" % myShelter)
+            mySearch = mycursor.fetchall()
+            myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
+            print(tabulate(mySearch, headers=myHeaders))
+        else:
+            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
+                             "FROM Pets P "
+                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
+                             "WHERE P.Deleted = 0 and P.Type = 'dog' and S.ShelterID = %s" % myShelter)
+            mySearch = mycursor.fetchall()
+            myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
+            print(tabulate(mySearch, headers=myHeaders))
+
+    elif user_pick == 2:
+
+    # export as csv option
+    user_pick = input("Export search as csv? Y/N ").upper()
+    while user_pick not in ['Y', 'N']:
+        user_pick = input("Please select Y/N: ").upper()
+    if user_pick == 'Y':
+        fileName = input("Enter a file name (excluding .csv): ")
+        # error check file name
+        filePattern = ".*\.csv$"
+        isFile = re.match(filePattern, fileName)
+        while isFile or fileName[-1] == ".":
+            fileName = input("Enter valid file name: ")
+            isFile = re.match(filePattern, fileName)
+        fileName = "./" + fileName + ".csv"
+        print(fileName)
+        csv_file = open(fileName, "w", newline='')
+        writer = csv.writer(csv_file)
+        writer.writerow(myHeaders)
+        for x in mySearch:
+            writer.writerow(x)
+    else:
+        employeeMenu()
+
+
 
 def addClient():
     print("Adding client...")
@@ -429,9 +513,9 @@ def updatePet():
         print("     Gender:          " + thisPet[2])
         print("     Type:            " + thisPet[3])
         if thisPet[4] == True:
-            status = "YES"
+            status = "True"
         else:
-            status = "NONE"
+            status = "False"
         print("     Health concerns: " + status)
         print("     Phase:           " + thisPet[5])
         print("Select a field to edit:")
@@ -556,9 +640,101 @@ def addFostering():
         print("ERROR: Start date can't be in the past")
         print("\n")
         addFostering()
+    mycursor.execute("INSERT INTO Fostering(PetID, ClientID, StartDate, EndDate)"
+                     "VALUES (%s,%s,%s,%s);",
+                     (thatID, thisID, start, start + datetime.timedelta(days=35)))
+    db.commit()
+    print("Match complete!")
 
-
-
+def addAdoption():
+    thisID = input("Enter the id of the client: ")
+    try:
+        thisID = int(thisID)
+    except ValueError:
+        print("ERROR: Client id must be numeric")
+        print("\n")
+        addAdoption()
+    print("Client information:")
+    mycursor.execute(
+        "SELECT FirstName, LastName, Preference, Phase, Status, StatusDate, Deleted "
+        "FROM Clients "
+        "WHERE ClientID = %s;" % thisID)
+    thisClient = mycursor.fetchall()
+    for c in thisClient:
+        thisClient = c
+    if thisClient[6] == True:
+        print("This client is not active.")
+        print("\n")
+        addAdoption()
+    if thisClient[3] != "adopting":
+        print("This client is looking to foster.")
+        print("\n")
+        employeeMenu()
+    print("     Name:          " + thisClient[0] + " " + thisClient[1])
+    if thisClient[4] == True:
+        status = "APPROVED"
+    else:
+        status = "PENDING"
+    print("     Status:        " + status + " as of " + (thisClient[5]).strftime("%Y-%m-%d"))
+    if status == "PENDING":
+        print("ERROR: Client application is pending. Client must be approved for adopting")
+        employeeMenu()
+    else:
+        print("     Preference:    " + thisClient[2])
+        thatID = input("Enter the id of the pet: ")
+        try:
+            thatID = int(thatID)
+        except ValueError:
+            print("ERROR: Pet id must be numeric")
+            print("\n")
+            addAdoption()
+        mycursor.execute("SELECT Name, Gender, Type, Phase, Deleted "
+                         "FROM Pets "
+                         "WHERE PetID = %s;" % thatID)
+        thisPet = mycursor.fetchall()
+        for p in thisPet:
+            thisPet = p
+        if thisPet[4] == True:
+            print("This pet is not active.")
+            print("\n")
+            addAdoption()
+        if thisPet[3] != "adopting":
+            print("This pet is not up for adoption.")
+            print("\n")
+            addAdoption()
+        if thisPet[2] != thisClient[2]:
+            print("The client prefers a different pet type.")
+            print("\n")
+            addAdoption()
+        print("     Name:          " + thisPet[0])
+        print("     Gender:        " + thisPet[1])
+        print("     Type:          " + thisPet[2])
+    start = input("Enter official transfer date YYYY-MM-DD: ")
+    # error check date format
+    dobPattern = "^(\d{4})-(\d{2})-(\d{2})$"
+    isDOB = re.match(dobPattern, start)
+    while not isDOB:
+        start = input("Enter valid date: ")
+        isDOB = re.match(dobPattern, start)
+    try:
+        start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+    except ValueError:
+        print("ERROR: Your month or day is out of range. Let's try again")
+        print("\n")
+        addAdoption()
+    if start < datetime.datetime.now().date():
+        print("ERROR: Date can't be in the past")
+        print("\n")
+        addAdoption()
+    mycursor.execute("INSERT INTO Adoptions(PetID, ClientID, Date)"
+                     "VALUES (%s,%s,%s);",
+                     (thatID, thisID, start))
+    db.commit()
+    mycursor.execute("UPDATE Pets SET Deleted = TRUE WHERE PetID = %s" % thatID)
+    db.commit()
+    mycursor.execute("UPDATE PetToShelter SET Deleted = TRUE WHERE PetID = %s" % thatID)
+    db.commit()
+    print("Match complete!")
 
 def endApp():
     print("\n")

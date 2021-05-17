@@ -27,7 +27,7 @@ genders = ['female', 'male']
 
 # generate clients data
 def genClients(num: int):
-    csv_file = open("./clients.csv", "w")
+    csv_file = open("./clients.csv", "w", newline='')
     writer = csv.writer(csv_file)
     writer.writerow(["FirstName","LastName","DOB","Phone","Email",
                      "Address","City","State","Zip",
@@ -51,7 +51,7 @@ def genClients(num: int):
 
 # generate pets data
 def genPets(num: int):
-    csv_file = open("./pets.csv", "w")
+    csv_file = open("./pets.csv", "w", newline='')
     writer = csv.writer(csv_file)
     writer.writerow(["Name", "DOB", "Gender",
                      "Type", "HealthConcerns",
@@ -66,7 +66,7 @@ def genPets(num: int):
 
 # generate shelters data
 def genShelters(num: int):
-    csv_file = open("./shelters.csv", "w")
+    csv_file = open("./shelters.csv", "w", newline='')
     writer = csv.writer(csv_file)
     writer.writerow(["Phone","Email",
                      "Address","City","State","Zip"])
@@ -80,7 +80,7 @@ def genShelters(num: int):
 
 # generate employees data
 def genEmployees(num: int):
-    csv_file = open("./employees.csv", "w")
+    csv_file = open("./employees.csv", "w", newline='')
     writer = csv.writer(csv_file)
     writer.writerow(["FirstName","LastName","DOB","Phone","Email",
                      "Address","City","State","Zip"])
