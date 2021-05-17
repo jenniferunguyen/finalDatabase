@@ -275,12 +275,13 @@ def updateClient():
         print("5. Preference")
         print("6. Phase")
         print("7. Approval status")
-        print("Enter 8 to choose different client")
+        print("8. Delete")
+        print("Enter 9 to choose different client")
         user_pick = input("Selection: ")
         while user_pick not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
             user_pick = input("Please select a valid option: ")
         user_pick = int(user_pick)
-        if user_pick == 8:
+        if user_pick == 9:
             updateClient()
         elif user_pick == 1:
             entry = input("Enter phone number xxx-xxx-xxxx: ")
@@ -369,6 +370,18 @@ def updateClient():
                              "WHERE ClientID = %s;",
                              (entry, date.today(), thisID))
             db.commit()
+        elif user_pick == 8:
+            user_pick = input("Are you sure you want to delete? Y/N ").upper()
+            while user_pick not in ['Y', 'N']:
+                user_pick = input("Please select Y/N: ").upper()
+            if user_pick == 'Y':
+                mycursor.execute("UPDATE Clients "
+                                 "SET Deleted = TRUE "
+                                 "WHERE ClientID = %s;",
+                                 (thisID))
+                db.commit()
+            else:
+                employeeMenu()
         print("...Updated")
         user_pick = input("Update another record? Y/N ").upper()
         while user_pick not in ['Y', 'N']:
@@ -420,7 +433,6 @@ def updatePet():
         else:
             status = "NONE"
         print("     Health concerns: " + status)
-
         print("     Phase:           " + thisPet[5])
         print("Select a field to edit:")
         print("1. Health concerns")
@@ -464,7 +476,86 @@ def updatePet():
         else:
             employeeMenu()
 
-# def addFostering():
+def addFostering():
+    thisID = input("Enter the id of the client: ")
+    try:
+        thisID = int(thisID)
+    except ValueError:
+        print("ERROR: Client id must be numeric")
+        print("\n")
+        addFostering()
+    print("Client information:")
+    mycursor.execute(
+        "SELECT FirstName, LastName, Preference, Phase, Status, StatusDate, Deleted "
+        "FROM Clients "
+        "WHERE ClientID = %s;" % thisID)
+    thisClient = mycursor.fetchall()
+    for c in thisClient:
+        thisClient = c
+    if thisClient[6] == True:
+        print("This client is not active.")
+        print("\n")
+        addFostering()
+    if thisClient[3] != "fostering":
+        print("This client is looking to adopt.")
+        print("\n")
+        employeeMenu()
+    print("     Name:          " + thisClient[0] + " " + thisClient[1])
+    if thisClient[4] == True:
+        status = "APPROVED"
+    else:
+        status = "PENDING"
+    print("     Status:        " + status + " as of " + (thisClient[5]).strftime("%Y-%m-%d"))
+    if status == "PENDING":
+        print("ERROR: Client application is pending. Client must be approved for fostering")
+        employeeMenu()
+    else:
+        print("     Preference:    " + thisClient[2])
+        thatID = input("Enter the id of the pet: ")
+        try:
+            thatID = int(thatID)
+        except ValueError:
+            print("ERROR: Pet id must be numeric")
+            print("\n")
+            addFostering()
+        mycursor.execute("SELECT Name, Gender, Type, Phase, Deleted "
+                         "FROM Pets "
+                         "WHERE PetID = %s;" % thatID)
+        thisPet = mycursor.fetchall()
+        for p in thisPet:
+            thisPet = p
+        if thisPet[4] == True:
+            print("This pet is not active.")
+            print("\n")
+            addFostering()
+        if thisPet[3] != "fostering":
+            print("This pet is not up for fostering.")
+            print("\n")
+            addFostering()
+        if thisPet[2] != thisClient[2]:
+            print("The client prefers a different pet type.")
+            print("\n")
+            addFostering()
+        print("     Name:          " + thisPet[0])
+        print("     Gender:        " + thisPet[1])
+        print("     Type:          " + thisPet[2])
+    start = input("Enter start date YYYY-MM-DD: ")
+    # error check date format
+    dobPattern = "^(\d{4})-(\d{2})-(\d{2})$"
+    isDOB = re.match(dobPattern, start)
+    while not isDOB:
+        start = input("Enter valid date: ")
+        isDOB = re.match(dobPattern, start)
+    try:
+        start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+    except ValueError:
+        print("ERROR: Your month or day is out of range. Let's try again")
+        print("\n")
+        addFostering()
+    if start < datetime.datetime.now().date():
+        print("ERROR: Start date can't be in the past")
+        print("\n")
+        addFostering()
 
 
 
