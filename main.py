@@ -25,14 +25,15 @@ def employeeMenu():
     print("2. Create new record")
     print("3. Update a record")
     print("4. Add a match")
-    print("5. Sign out")
+    print("5. Reports")
+    print("6. Sign out")
     user_pick = input("Please select an action: ")
-    while user_pick not in ["1", "2", "3","4","5"]:
+    while user_pick not in ["1", "2", "3","4","5", "6"]:
         user_pick = input("Please select a valid option: ")
     print("\n")
     user_pick = int(user_pick)
 
-    if user_pick == 5:
+    if user_pick == 6:
         endApp()
 
     if user_pick == 1:
@@ -76,128 +77,234 @@ def employeeMenu():
             addFostering()
         else:
             addAdoption()
+    elif user_pick == 5:
+        reportsMenu()
     employeeMenu()
 
 def searchMenu():
     print(">>SEARCH")
-    print("1. Pets by shelter")
-    print("2. Pending fostering applications")
-    print("3. Pending adoption applications")
-    print("4. Approved fostering applications (never fostered before)")
-    print("5. Approved adoption applications (never adopted before)")
-    print("Enter 6 to return to MAIN MENU")
+    print("1. client by id")
+    print("2. pet by id")
+    print("3. number of fosters")
+    print("4. number of adoptions")
+    print("Enter 5 to return to MAIN MENU")
     user_pick = input("Please select an action: ")
     while user_pick not in ["1", "2", "3", "4", "5"]:
         user_pick = input("Please select a valid option: ")
     print("\n")
     user_pick = int(user_pick)
 
-    if user_pick == 6:
+    if user_pick == 5:
         employeeMenu()
     elif user_pick == 1:
-        myShelter = input("Enter shelter ID: ")
-        while myShelter not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
-            myShelter = input("Please select a valid shelter: ")
-        print("\n")
-        myShelter = int(myShelter)
-        print("View option: ")
-        print("1. all pets")
-        print("2. all cats")
-        print("3. all dogs")
-        user_pick = input("Please select an option: ")
+        thisID = input("Enter the client id: ")
+        try:
+            thisID = int(thisID)
+        except ValueError:
+            print("ERROR: Client id must be numeric")
+            print("\n")
+            searchMenu()
+        print("Client information:")
+        mycursor.execute("SELECT FirstName, LastName, DateOfBirth, Phone, Email, Address, City, State, Zip, Occupation, Preference, Phase, Status, StatusDate, Deleted "
+                         "FROM Clients "
+                         "WHERE ClientID = %s;" % thisID)
+        thisClient = mycursor.fetchall()
+        for c in thisClient:
+            thisClient = c
+        print("     Name:          " + thisClient[0] + " " + thisClient[1])
+        print("     Date of birth: " + (thisClient[2]).strftime("%Y-%m-%d"))
+        print("     Phone:         " + thisClient[3])
+        print("     Email:         " + thisClient[4])
+        print("     Address:       " + thisClient[5] + " " + thisClient[6] + ", " + thisClient[7] + " " + thisClient[8])
+        print("     Occupation:    " + thisClient[9])
+        print("     Preference:    " + thisClient[10])
+        print("     Phase:         " + thisClient[11])
+        if thisClient[12] == True:
+            status = "APPROVED"
+        else:
+            status = "PENDING"
+        print("     Status:        " + status + " as of " + (thisClient[13]).strftime("%Y-%m-%d"))
+        if thisClient[13] == True:
+            condition = "NO"
+        else:
+            condition = "YES"
+        print("     Active:        " + condition)
+        if condition == "YES":
+            user_pick = input("Get employee contact? Y/N ").upper()
+            while user_pick not in ['Y', 'N']:
+                user_pick = input("Please select Y/N: ").upper()
+            if user_pick == 'Y':
+                mycursor.execute("SELECT E.FirstName, E.LastName, E.Phone, E.Email "
+                                 "FROM Employees E "
+                                 "JOIN ClientToEmployee CTE ON E.EmployeeID = CTE.EmployeeID "
+                                 "WHERE ClientID = %s;" % thisID)
+                thisContact = mycursor.fetchall()
+                for c in thisContact:
+                    thisContact = c
+                print("     Name:          " + thisClient[0] + " " + thisClient[1])
+                print("     Phone:         " + thisClient[3])
+                print("     Email:         " + thisClient[4])
+    elif user_pick == 2:
+        thisID = input("Enter the pet id: ")
+        try:
+            thisID = int(thisID)
+        except ValueError:
+            print("ERROR: Client id must be numeric")
+            print("\n")
+            searchMenu()
+        print("Pet information:")
+        mycursor.execute("SELECT Name, DateOfBirth, Gender, Type, HealthConcerns, Phase, Deleted "
+                         "FROM Pets "
+                         "WHERE PetID = %s;" % thisID)
+        thisPet = mycursor.fetchall()
+        for p in thisPet:
+            thisPet = p
+        print("     Name:            " + thisPet[0])
+        print("     Date of birth:   " + (thisPet[1]).strftime("%Y-%m-%d"))
+        print("     Gender:          " + thisPet[2])
+        print("     Type:            " + thisPet[3])
+        if thisPet[4] == True:
+            status = "True"
+        else:
+            status = "False"
+        print("     Health concerns: " + status)
+        print("     Phase:           " + thisPet[5])
+        if thisPet[6] == True:
+            condition = "NO"
+        else:
+            condition = "YES"
+        print("     Active:          " + condition)
+        if condition == "YES":
+            user_pick = input("Get shelter contact? Y/N ").upper()
+            while user_pick not in ['Y', 'N']:
+                user_pick = input("Please select Y/N: ").upper()
+            if user_pick == 'Y':
+                mycursor.execute("SELECT S.ShelterID, S.Phone, S.Email "
+                                 "FROM Shelters S "
+                                 "JOIN PetToShelter PTS ON S.ShelterID = PTS.ShelterID "
+                                 "WHERE PTS.PetID = %s;" % thisID)
+                thisContact = mycursor.fetchall()
+                for c in thisContact:
+                    thisContact = c
+                print("     Shelter ID:    " + str(thisContact[0]))
+                print("     Phone:         " + thisContact[1])
+                print("     Email:         " + thisContact[2])
+    elif user_pick == 3:
+        print("Select filter: ")
+        print("1. all fosters")
+        print("2. by shelter")
+        print("3. by year")
+        user_pick = input("Selection: ")
         while user_pick not in ["1", "2", "3"]:
             user_pick = input("Please select a valid option: ")
-        print("\n")
         user_pick = int(user_pick)
         if user_pick == 1:
-            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.Type, P.HealthConcerns, P.Phase "
-                             "FROM Pets P "
-                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
-                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
-                             "WHERE P.Deleted = 0 and S.ShelterID = %s" % myShelter)
-            mySearch = mycursor.fetchall()
-            myHeaders = ["ID", "Name", "DateOfBirth", "Type", "HealthConcerns", "Phase"]
-            print(tabulate(mySearch, headers=myHeaders))
+            mycursor.execute("SELECT count(ID) "
+                             "FROM Fostering;")
+            thisCount = mycursor.fetchall()
+            for c in thisCount:
+                thisCount = c[0]
+            print("...There has been " + str(thisCount) + " fosters.")
         elif user_pick == 2:
-            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
-                             "FROM Pets P "
+            mycursor.execute("SELECT S.ShelterID, count(F.ID) "
+                             "FROM Fostering F "
+                             "JOIN Pets P on P.PetID = F.PetID "
                              "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
                              "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
-                             "WHERE P.Deleted = 0 and P.Type = 'cat' and S.ShelterID = %s" % myShelter)
-            mySearch = mycursor.fetchall()
-            myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
-            print(tabulate(mySearch, headers=myHeaders))
-        else:
-            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
-                             "FROM Pets P "
+                             "GROUP BY S.ShelterID;")
+            thisCount = mycursor.fetchall()
+            print(tabulate(thisCount, headers=["ShelterID", "Number of Fosters"]))
+        elif user_pick == 3:
+            thisYear = input("Enter the year (2000-2021): ")
+            # error check for year
+            yearPattern = "^\d{4}$"
+            isYear = re.match(yearPattern, thisYear)
+            if isYear:
+                thisYear = int(thisYear)
+                if thisYear < 2000:
+                    print("Year must be after 2000")
+                    isYear = False
+                elif thisYear > 2021:
+                    print("Year can't be in the future")
+                    isYear = False
+            while not isYear:
+                thisYear = input("Enter valid year: ")
+                isYear = re.match(yearPattern, thisYear)
+                if isYear:
+                    thisYear = int(thisYear)
+                    if thisYear < 2000:
+                        print("Year must be after 2000")
+                        isYear = False
+                    elif thisYear > 2021:
+                        print("Year can't be in the future")
+                        isYear = False
+            mycursor.execute("SELECT count(ID) "
+                             "FROM Fostering "
+                             "WHERE YEAR(StartDate) >= %s and YEAR(StartDate) < %s;",
+                             [thisYear, thisYear+1])
+            thisCount = mycursor.fetchall()
+            for c in thisCount:
+                thisCount = c[0]
+            print("...There has been " + str(thisCount) + " fosters.")
+    elif user_pick == 4:
+        print("Select filter: ")
+        print("1. all adoptions")
+        print("2. by shelter")
+        print("3. by year")
+        user_pick = input("Selection: ")
+        while user_pick not in ["1", "2", "3"]:
+            user_pick = input("Please select a valid option: ")
+        user_pick = int(user_pick)
+        if user_pick == 1:
+            mycursor.execute("SELECT count(ID) "
+                             "FROM Adoptions;")
+            thisCount = mycursor.fetchall()
+            for c in thisCount:
+                thisCount = c[0]
+            print("...There has been " + str(thisCount) + " adoptions.")
+        elif user_pick == 2:
+            mycursor.execute("SELECT S.ShelterID, count(A.ID) "
+                             "FROM Adoptions A "
+                             "JOIN Pets P on P.PetID = A.PetID "
                              "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
                              "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
-                             "WHERE P.Deleted = 0 and P.Type = 'dog' and S.ShelterID = %s" % myShelter)
-            mySearch = mycursor.fetchall()
-            myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
-            print(tabulate(mySearch, headers=myHeaders))
-
-    elif user_pick == 2 or user_pick == 3:
-        if user_pick == 2:
-            myPhase = 'fostering'
-        else:
-            myPhase = 'adopting'
-        mycursor.execute("SELECT ClientID, FirstName, LastName, DateOfBirth, Phone, Email, "
-                         "Address, City, State, Zip, Occupation, Preference, StatusDate "
-                         "FROM Clients "
-                         "WHERE Phase = %s and Status = 0 and Deleted = 0 "
-                         "ORDER BY StatusDate;", [myPhase])
-        mySearch = mycursor.fetchall()
-        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
-                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
-        print(tabulate(mySearch, headers=myHeaders))
-
-    elif user_pick == 4:
-        mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName, C.DateOfBirth, C.Phone, C.Email, "
-                         "C.Address, C.City, C.State, C.Zip, C.Occupation, C.Preference, C.StatusDate "
-                         "FROM Clients C "
-                         "LEFT JOIN Fostering F on C.ClientID = F.ClientID "
-                         "WHERE F.ClientID is null and C.Phase = 'fostering' and C.Status = 1 and C.Deleted = 0 "
-                         "ORDER BY StatusDate;")
-        mySearch = mycursor.fetchall()
-        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
-                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
-        print(tabulate(mySearch, headers=myHeaders))
-    elif user_pick == 4:
-        mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName, C.DateOfBirth, C.Phone, C.Email, "
-                         "C.Address, C.City, C.State, C.Zip, C.Occupation, C.Preference, C.StatusDate "
-                         "FROM Clients C "
-                         "LEFT JOIN Adoptions A on C.ClientID = A.ClientID "
-                         "WHERE A.ClientID is null and C.Phase = 'adopting' and C.Status = 1 and C.Deleted = 0 "
-                         "ORDER BY StatusDate;")
-        mySearch = mycursor.fetchall()
-        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
-                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
-        print(tabulate(mySearch, headers=myHeaders))
-
-    # export as csv option
-    user_pick = input("Export search as csv? Y/N ").upper()
-    while user_pick not in ['Y', 'N']:
-        user_pick = input("Please select Y/N: ").upper()
-    if user_pick == 'Y':
-        fileName = input("Enter a file name (excluding .csv): ")
-        # error check file name
-        filePattern = ".*\.csv$"
-        isFile = re.match(filePattern, fileName)
-        while isFile or fileName[-1] == ".":
-            fileName = input("Enter valid file name: ")
-            isFile = re.match(filePattern, fileName)
-        fileName = "./" + fileName + ".csv"
-        print(fileName)
-        csv_file = open(fileName, "w", newline='')
-        writer = csv.writer(csv_file)
-        writer.writerow(myHeaders)
-        for x in mySearch:
-            writer.writerow(x)
-    else:
-        employeeMenu()
-
-
+                             "GROUP BY S.ShelterID;")
+            thisCount = mycursor.fetchall()
+            print(tabulate(thisCount, headers=["ShelterID", "Number of Adoptions"]))
+        elif user_pick == 3:
+            thisYear = input("Enter the year (2000-2021): ")
+            # error check for year
+            yearPattern = "^\d{4}$"
+            isYear = re.match(yearPattern, thisYear)
+            if isYear:
+                thisYear = int(thisYear)
+                if thisYear < 2000:
+                    print("Year must be after 2000")
+                    isYear = False
+                elif thisYear > 2021:
+                    print("Year can't be in the future")
+                    isYear = False
+            while not isYear:
+                thisYear = input("Enter valid year: ")
+                isYear = re.match(yearPattern, thisYear)
+                if isYear:
+                    thisYear = int(thisYear)
+                    if thisYear < 2000:
+                        print("Year must be after 2000")
+                        isYear = False
+                    elif thisYear > 2021:
+                        print("Year can't be in the future")
+                        isYear = False
+            mycursor.execute("SELECT count(ID) "
+                             "FROM Adoptions "
+                             "WHERE YEAR(Date) >= %s and YEAR(Date) < %s;",
+                             [thisYear, thisYear + 1])
+            thisCount = mycursor.fetchall()
+            for c in thisCount:
+                thisCount = c[0]
+            print("...There has been " + str(thisCount) + " adoptions.")
+    print("\n")
+    searchMenu()
 
 def addClient():
     print("Adding client...")
@@ -528,9 +635,9 @@ def updatePet():
     try:
         thisID = int(thisID)
     except ValueError:
-        print("ERROR: Client id must be numeric")
+        print("ERROR: Pet id must be numeric")
         print("\n")
-        updateClient()
+        updatePet()
     if not thisID in petList:
         print("You do not have access to that pet id. Please choose an id from your shelter's list.")
         print("\n")
@@ -771,6 +878,125 @@ def addAdoption():
     mycursor.execute("UPDATE PetToShelter SET Deleted = TRUE WHERE PetID = %s" % thatID)
     db.commit()
     print("Match complete!")
+
+def reportsMenu():
+    print(">>REPORTS")
+    print("1. Pets by shelter")
+    print("2. Pending fostering applications")
+    print("3. Pending adoption applications")
+    print("4. Approved fostering applications (never fostered before)")
+    print("5. Approved adoption applications (never adopted before)")
+    print("Enter 6 to return to MAIN MENU")
+    user_pick = input("Please select an action: ")
+    while user_pick not in ["1", "2", "3", "4", "5", "6"]:
+        user_pick = input("Please select a valid option: ")
+    print("\n")
+    user_pick = int(user_pick)
+
+    if user_pick == 6:
+        employeeMenu()
+    elif user_pick == 1:
+        myShelter = input("Enter shelter ID: ")
+        while myShelter not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
+            myShelter = input("Please select a valid shelter: ")
+        print("\n")
+        myShelter = int(myShelter)
+        print("View option: ")
+        print("1. all pets")
+        print("2. all cats")
+        print("3. all dogs")
+        user_pick = input("Please select an option: ")
+        while user_pick not in ["1", "2", "3"]:
+            user_pick = input("Please select a valid option: ")
+        print("\n")
+        user_pick = int(user_pick)
+        if user_pick == 1:
+            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.Type, P.HealthConcerns, P.Phase "
+                             "FROM Pets P "
+                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
+                             "WHERE P.Deleted = 0 and S.ShelterID = %s" % myShelter)
+            mySearch = mycursor.fetchall()
+            myHeaders = ["ID", "Name", "DateOfBirth", "Type", "HealthConcerns", "Phase"]
+            print(tabulate(mySearch, headers=myHeaders))
+        elif user_pick == 2:
+            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
+                             "FROM Pets P "
+                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
+                             "WHERE P.Deleted = 0 and P.Type = 'cat' and S.ShelterID = %s" % myShelter)
+            mySearch = mycursor.fetchall()
+            myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
+            print(tabulate(mySearch, headers=myHeaders))
+        else:
+            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
+                             "FROM Pets P "
+                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
+                             "WHERE P.Deleted = 0 and P.Type = 'dog' and S.ShelterID = %s" % myShelter)
+            mySearch = mycursor.fetchall()
+            myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
+            print(tabulate(mySearch, headers=myHeaders))
+
+    elif user_pick == 2 or user_pick == 3:
+        if user_pick == 2:
+            myPhase = 'fostering'
+        else:
+            myPhase = 'adopting'
+        mycursor.execute("SELECT ClientID, FirstName, LastName, DateOfBirth, Phone, Email, "
+                         "Address, City, State, Zip, Occupation, Preference, StatusDate "
+                         "FROM Clients "
+                         "WHERE Phase = %s and Status = 0 and Deleted = 0 "
+                         "ORDER BY StatusDate;", [myPhase])
+        mySearch = mycursor.fetchall()
+        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
+                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
+        print(tabulate(mySearch, headers=myHeaders))
+
+    elif user_pick == 4:
+        mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName, C.DateOfBirth, C.Phone, C.Email, "
+                         "C.Address, C.City, C.State, C.Zip, C.Occupation, C.Preference, C.StatusDate "
+                         "FROM Clients C "
+                         "LEFT JOIN Fostering F on C.ClientID = F.ClientID "
+                         "WHERE F.ClientID is null and C.Phase = 'fostering' and C.Status = 1 and C.Deleted = 0 "
+                         "ORDER BY StatusDate;")
+        mySearch = mycursor.fetchall()
+        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
+                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
+        print(tabulate(mySearch, headers=myHeaders))
+    elif user_pick == 4:
+        mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName, C.DateOfBirth, C.Phone, C.Email, "
+                         "C.Address, C.City, C.State, C.Zip, C.Occupation, C.Preference, C.StatusDate "
+                         "FROM Clients C "
+                         "LEFT JOIN Adoptions A on C.ClientID = A.ClientID "
+                         "WHERE A.ClientID is null and C.Phase = 'adopting' and C.Status = 1 and C.Deleted = 0 "
+                         "ORDER BY StatusDate;")
+        mySearch = mycursor.fetchall()
+        myHeaders = ["ID", "FirstName", "LastName", "DateOfBirth", "Phone", "Email",
+                     "Address", "City", "State", "Zip", "Occupation", "Preference", "StatusDate"]
+        print(tabulate(mySearch, headers=myHeaders))
+
+    # export as csv option
+    user_pick = input("Export search as csv? Y/N ").upper()
+    while user_pick not in ['Y', 'N']:
+        user_pick = input("Please select Y/N: ").upper()
+    if user_pick == 'Y':
+        fileName = input("Enter a file name (excluding .csv): ")
+        # error check file name
+        filePattern = ".*\.csv$"
+        isFile = re.match(filePattern, fileName)
+        while isFile or fileName[-1] == ".":
+            fileName = input("Enter valid file name: ")
+            isFile = re.match(filePattern, fileName)
+        fileName = "./" + fileName + ".csv"
+        print(fileName)
+        csv_file = open(fileName, "w", newline='')
+        writer = csv.writer(csv_file)
+        writer.writerow(myHeaders)
+        for x in mySearch:
+            writer.writerow(x)
+    else:
+        employeeMenu()
 
 def endApp():
     print("\n")
