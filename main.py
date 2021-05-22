@@ -157,9 +157,8 @@ def customerMenu():
             else:
                 customerMenu()
     elif user_pick == 2:
-        mycursor.execute("SELECT E.FirstName, E.LastName, E.Phone, E.Email "
-                         "FROM Employees E "
-                         "JOIN ClientToEmployee CTE ON E.EmployeeID = CTE.EmployeeID "
+        mycursor.execute("SELECT eFirstName, eLastName, ePhone, eEmail "
+                         "FROM MyClients "
                          "WHERE ClientID = %s;" % myID)
         thisContact = mycursor.fetchall()
         for c in thisContact:
@@ -292,9 +291,8 @@ def searchMenu():
             while user_pick not in ['Y', 'N']:
                 user_pick = input("Please select Y/N: ").upper()
             if user_pick == 'Y':
-                mycursor.execute("SELECT E.FirstName, E.LastName, E.Phone, E.Email "
-                                 "FROM Employees E "
-                                 "JOIN ClientToEmployee CTE ON E.EmployeeID = CTE.EmployeeID "
+                mycursor.execute("SELECT eFirstName, eLastName, ePhone, eEmail "
+                                 "FROM MyClients "
                                  "WHERE ClientID = %s;" % thisID)
                 thisContact = mycursor.fetchall()
                 for c in thisContact:
@@ -337,10 +335,9 @@ def searchMenu():
             while user_pick not in ['Y', 'N']:
                 user_pick = input("Please select Y/N: ").upper()
             if user_pick == 'Y':
-                mycursor.execute("SELECT S.ShelterID, S.Phone, S.Email "
-                                 "FROM Shelters S "
-                                 "JOIN PetToShelter PTS ON S.ShelterID = PTS.ShelterID "
-                                 "WHERE PTS.PetID = %s;" % thisID)
+                mycursor.execute("SELECT ShelterID, Phone, Email "
+                                 "FROM MyPets "
+                                 "WHERE PetID = %s;" % thisID)
                 thisContact = mycursor.fetchall()
                 for c in thisContact:
                     thisContact = c
@@ -366,8 +363,7 @@ def searchMenu():
         elif user_pick == 2:
             mycursor.execute("SELECT S.ShelterID, count(F.ID) "
                              "FROM Fostering F "
-                             "JOIN Pets P on P.PetID = F.PetID "
-                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN PetToShelter PTS on F.PetID = PTS.PetID "
                              "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
                              "GROUP BY S.ShelterID;")
             thisCount = mycursor.fetchall()
@@ -423,8 +419,7 @@ def searchMenu():
         elif user_pick == 2:
             mycursor.execute("SELECT S.ShelterID, count(A.ID) "
                              "FROM Adoptions A "
-                             "JOIN Pets P on P.PetID = A.PetID "
-                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
+                             "JOIN PetToShelter PTS on A.PetID = PTS.PetID "
                              "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
                              "GROUP BY S.ShelterID;")
             thisCount = mycursor.fetchall()
@@ -610,23 +605,23 @@ def addPet():
 
 def updateClient():
     print("Here are your clients: ")
-    mycursor.execute("SELECT C.ClientID, C.FirstName, C.LastName "
-                     "FROM Clients C "
-                     "JOIN ClientToEmployee CTE ON C.ClientID = CTE.ClientID "
-                     "JOIN Employees E ON E.EmployeeID = CTE.EmployeeID "
-                     "WHERE C.Deleted = 0 and E.EmployeeID = %s;" % myID)
+    mycursor.execute("SELECT ClientID, cFirstName, cLastName "
+                     "FROM MyClients "
+                     "WHERE EmployeeID = %s;" % myID)
     myClients = mycursor.fetchall()
     clientList = []
     for c in myClients:
         clientList.append(c[0])
     print(tabulate(myClients, headers=["ID", "Name"]))
-    thisID = input("Enter the id of the client you want to update: ")
+    thisID = input("Enter the id of the client you want to update (or 0 to exit): ")
     try:
         thisID = int(thisID)
     except ValueError:
         print("ERROR: Client id must be numeric")
         print("\n")
         updateClient()
+    if thisID == 0:
+        employeeMenu()
     if not thisID in clientList:
         print("You do not have access to that client id. Please choose an id from your client list.")
         print("\n")
@@ -663,7 +658,7 @@ def updateClient():
         print("8. Delete")
         print("Enter 9 to choose different client")
         user_pick = input("Selection: ")
-        while user_pick not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
+        while user_pick not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
             user_pick = input("Please select a valid option: ")
         user_pick = int(user_pick)
         if user_pick == 9:
@@ -778,24 +773,23 @@ def updateClient():
 
 def updatePet():
     print("Here are the pets at your shelter: ")
-    mycursor.execute("SELECT P.PetID, P.Name, P.Type, P.Phase "
-                     "FROM Pets P "
-                     "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
-                     "JOIN EmployeeToShelter ETS on PTS.ShelterID = ETS.ShelterID "
-                     "JOIN Employees E on E.EmployeeID = ETS.EmployeeID "
-                     "WHERE P.Deleted = 0 and E.EmployeeID = %s"% myID)
+    mycursor.execute("SELECT PetID, Name, Type, Phase "
+                     "FROM MyPets "
+                     "WHERE EmployeeID = %s"% myID)
     myPets = mycursor.fetchall()
     petList = []
     for p in myPets:
         petList.append(p[0])
     print(tabulate(myPets, headers=["ID", "Name", "Type", "Phase"]))
-    thisID = input("Enter the id of the pet you want to update: ")
+    thisID = input("Enter the id of the pet you want to update (or 0 to exit): ")
     try:
         thisID = int(thisID)
     except ValueError:
         print("ERROR: Pet id must be numeric")
         print("\n")
         updatePet()
+    if thisID == 0:
+        employeeMenu()
     if not thisID in petList:
         print("You do not have access to that pet id. Please choose an id from your shelter's list.")
         print("\n")
@@ -1069,29 +1063,23 @@ def reportsMenu():
         print("\n")
         user_pick = int(user_pick)
         if user_pick == 1:
-            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.Type, P.HealthConcerns, P.Phase "
-                             "FROM Pets P "
-                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
-                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
-                             "WHERE P.Deleted = 0 and S.ShelterID = %s" % myShelter)
+            mycursor.execute("SELECT DISTINCT PetID, Name, DateOfBirth, Type, HealthConcerns, Phase "
+                             "FROM MyPets "
+                             "WHERE ShelterID = %s" % myShelter)
             mySearch = mycursor.fetchall()
             myHeaders = ["ID", "Name", "DateOfBirth", "Type", "HealthConcerns", "Phase"]
             print(tabulate(mySearch, headers=myHeaders))
         elif user_pick == 2:
-            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
-                             "FROM Pets P "
-                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
-                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
-                             "WHERE P.Deleted = 0 and P.Type = 'cat' and S.ShelterID = %s" % myShelter)
+            mycursor.execute("SELECT DISTINCT PetID, Name, DateOfBirth, HealthConcerns, Phase "
+                             "FROM MyPets "
+                             "WHERE Type = 'cat' and ShelterID = %s" % myShelter)
             mySearch = mycursor.fetchall()
             myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
             print(tabulate(mySearch, headers=myHeaders))
         else:
-            mycursor.execute("SELECT P.PetID, P.Name, P.DateOfBirth, P.HealthConcerns, P.Phase "
-                             "FROM Pets P "
-                             "JOIN PetToShelter PTS on P.PetID = PTS.PetID "
-                             "JOIN Shelters S on S.ShelterID = PTS.ShelterID "
-                             "WHERE P.Deleted = 0 and P.Type = 'dog' and S.ShelterID = %s" % myShelter)
+            mycursor.execute("SELECT DISTINCT PetID, Name, DateOfBirth, HealthConcerns, Phase "
+                             "FROM MyPets "
+                             "WHERE Type = 'dog' and ShelterID = %s" % myShelter)
             mySearch = mycursor.fetchall()
             myHeaders = ["ID", "Name", "DateOfBirth", "HealthConcerns", "Phase"]
             print(tabulate(mySearch, headers=myHeaders))

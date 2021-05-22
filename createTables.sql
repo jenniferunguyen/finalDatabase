@@ -1,3 +1,4 @@
+-- information tables
 CREATE TABLE Clients(
     ClientID INTEGER PRIMARY KEY AUTO_INCREMENT,
     FirstName VARCHAR(30),
@@ -53,6 +54,7 @@ CREATE TABLE Employees(
     Deleted BOOLEAN DEFAULT FALSE
 );
 
+-- connection tables
 CREATE TABLE ClientToEmployee(
     ID INTEGER PRIMARY KEY AUTO_INCREMENT,
     ClientID INTEGER,
@@ -90,6 +92,7 @@ CREATE TABLE Fostering(
     FOREIGN KEY (ClientID) references Clients(ClientID)
 );
 
+-- logging tabels
 CREATE TABLE Adoptions(
     ID INTEGER PRIMARY KEY AUTO_INCREMENT,
     PetID INTEGER,
@@ -99,10 +102,40 @@ CREATE TABLE Adoptions(
     FOREIGN KEY (ClientID) references Clients(ClientID)
 );
 
--- in the event of a problem, delete tha tables in the following order
-DROP TABLE Fostering, Adoptions;
-DROP TABLE ClientToEmployee, EmployeeToShelter, PetToShelter;
-DROP TABLE Clients, Employees, Pets, Shelters;
+-- indexes
+CREATE UNIQUE INDEX idx_client
+ON Clients(clientID);
 
+CREATE UNIQUE INDEX idx_pet
+ON Pets(petID);
+
+CREATE UNIQUE INDEX idx_employee
+ON Employees(EmployeeID);
+
+-- database views
+CREATE VIEW MyClients AS
+SELECT C.ClientID,C.FirstName cFirstName,C.LastName cLastName,C.DateOfBirth,
+       C.Phone cPhone,C.Email cEmail,C.Address,C.City,C.State,C.Zip,
+       C.Occupation,C.Preference,C.Phase,C.Status,C.StatusDate,
+       E.EmployeeID, E.FirstName eFirstName, E.LastName eLastName, E.Email eEmail, E.Phone ePhone
+FROM Clients C
+JOIN ClientToEmployee CTE ON C.ClientID = CTE.ClientID
+JOIN Employees E ON E.EmployeeID = CTE.EmployeeID
+WHERE C.Deleted = 0;
+
+CREATE VIEW MyPets AS
+SELECT S.ShelterID, S.Phone, S.Email, P.PetID, P.Name, P.Phase, P.DateOfBirth, P.Type, P.HealthConcerns, E.EmployeeID
+FROM Shelters S
+JOIN PetToShelter PTS ON S.ShelterID = PTS.ShelterID
+JOIN Pets P on P.PetID = PTS.PetID
+JOIN EmployeeToShelter ETS on PTS.ShelterID = ETS.ShelterID
+JOIN Employees E on E.EmployeeID = ETS.EmployeeID
+WHERE P.Deleted = 0;
+
+-- in the event of a problem, delete tha tables in the following order
+-- DROP VIEW MyClients, MyPets;
+-- DROP TABLE Fostering, Adoptions;
+-- DROP TABLE ClientToEmployee, EmployeeToShelter, PetToShelter;
+-- DROP TABLE Clients, Employees, Pets, Shelters;
 
 

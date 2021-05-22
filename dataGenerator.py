@@ -99,81 +99,121 @@ def genEmployees(num: int):
 def importDatạ():
     mycursor = db.cursor()
     # fill Clients table
-    with open("./clients.csv") as csv_file:
-        reader = csv.DictReader(csv_file)
-        print("Importing clients...")
-        clientCount = 0
-        for row in reader:
-            mycursor.execute("INSERT INTO Clients(FirstName, LastName, DateOfBirth, Phone, Email, "
-                             "Address, City, State, Zip,"
-                             "Occupation, Preference, Phase,"
-                             "Status, StatusDate)"
-                             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);",
-                             (row["FirstName"], row["LastName"], row["DOB"], row["Phone"], row["Email"],
-                              row["Address"], row["City"], row["State"], row["Zip"],
-                              row["Occupation"], row["Preference"], row["Phase"],
-                              distutils.util.strtobool(row["Approved?"]), row["Update"]))
-            db.commit()
-            clientCount += 1
+    try:
+        with open("./clients.csv") as csv_file:
+            reader = csv.DictReader(csv_file)
+            print("Importing clients...")
+            clientCount = 0
+            for row in reader:
+                mycursor.execute("INSERT INTO Clients(FirstName, LastName, DateOfBirth, Phone, Email, "
+                                 "Address, City, State, Zip,"
+                                 "Occupation, Preference, Phase,"
+                                 "Status, StatusDate)"
+                                 "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);",
+                                 (row["FirstName"], row["LastName"], row["DOB"], row["Phone"], row["Email"],
+                                  row["Address"], row["City"], row["State"], row["Zip"],
+                                  row["Occupation"], row["Preference"], row["Phase"],
+                                  distutils.util.strtobool(row["Approved?"]), row["Update"]))
+                db.commit()
+                clientCount += 1
+    except KeyError:
+        print("ERROR in clients.csv. Make sure the columns are labeled appropriately.")
+        db.rollback()
+        exit()
+    except mysql.connector.Error as error:
+        print("ERROR: Use createTables.sql to create the Clients table.")
+        exit()
     # fill Pets table
-    with open("./pets.csv") as csv_file:
-        reader = csv.DictReader(csv_file)
-        print("Importing pets...")
-        petCount = 0
-        for row in reader:
-            mycursor.execute("INSERT INTO Pets(Name, DateOfBirth, Gender,"
-                             "Type, HealthConcerns, Phase)"
-                             "VALUES (%s,%s,%s,%s,%s,%s);",
-                             (row["Name"], row["DOB"], row["Gender"],
-                              row["Type"], distutils.util.strtobool(row["HealthConcerns"]), row["Phase"]))
-            db.commit()
-            petCount += 1
+    try:
+        with open("./pets.csv") as csv_file:
+            reader = csv.DictReader(csv_file)
+            print("Importing pets...")
+            petCount = 0
+            for row in reader:
+                mycursor.execute("INSERT INTO Pets(Name, DateOfBirth, Gender,"
+                                 "Type, HealthConcerns, Phase)"
+                                 "VALUES (%s,%s,%s,%s,%s,%s);",
+                                 (row["Name"], row["DOB"], row["Gender"],
+                                  row["Type"], distutils.util.strtobool(row["HealthConcerns"]), row["Phase"]))
+                db.commit()
+                petCount += 1
+    except KeyError:
+        print("ERROR in pets.csv. Make sure the columns are labeled appropriately.")
+        print("You should clear the Clients table before trying again.")
+        db.rollback()
+        exit()
+    except mysql.connector.Error as error:
+        print("ERROR: Use createTables.sql to create the Pets table.")
+        print("You should clear the Clients table before trying again.")
+        exit()
     # fill Shelters table
-    with open("./shelters.csv") as csv_file:
-        reader = csv.DictReader(csv_file)
-        print("Importing shelters...")
-        shelterCount = 0
-        for row in reader:
-            mycursor.execute("INSERT INTO Shelters(Phone, Email, "
-                             "Address, City, State, Zip)"
-                             "VALUES (%s,%s,%s,%s,%s,%s);",
-                             (row["Phone"], row["Email"],
-                              row["Address"], row["City"], row["State"], row["Zip"]))
-            db.commit()
-            shelterCount += 1
+    try:
+        with open("./shelters.csv") as csv_file:
+            reader = csv.DictReader(csv_file)
+            print("Importing shelters...")
+            shelterCount = 0
+            for row in reader:
+                mycursor.execute("INSERT INTO Shelters(Phone, Email, "
+                                 "Address, City, State, Zip)"
+                                 "VALUES (%s,%s,%s,%s,%s,%s);",
+                                 (row["Phone"], row["Email"],
+                                  row["Address"], row["City"], row["State"], row["Zip"]))
+                db.commit()
+                shelterCount += 1
+    except KeyError:
+        print("ERROR in shelters.csv. Make sure the columns are labeled appropriately.")
+        print("You should clear the Clients table and Pets table before trying again.")
+        db.rollback()
+        exit()
+    except mysql.connector.Error as error:
+        print("ERROR: Use createTables.sql to create the Shelters table.")
+        print("You should clear the Clients table and Pets table before trying again.")
+        exit()
     # fill Employees table
-    with open("./employees.csv") as csv_file:
-        reader = csv.DictReader(csv_file)
-        print("Importing employees...")
-        employeeCount = 0
-        for row in reader:
-            mycursor.execute("INSERT INTO Employees(FirstName, LastName, DateOfBirth, Phone, Email, "
-                             "Address, City, State, Zip)"
-                             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s);",
-                             (row["FirstName"], row["LastName"], row["DOB"], row["Phone"], row["Email"],
-                              row["Address"], row["City"], row["State"], row["Zip"]))
-            db.commit()
-            employeeCount += 1
+    try:
+        with open("./employees.csv") as csv_file:
+            reader = csv.DictReader(csv_file)
+            print("Importing employees...")
+            employeeCount = 0
+            for row in reader:
+                mycursor.execute("INSERT INTO Employees(FirstName, LastName, DateOfBirth, Phone, Email, "
+                                 "Address, City, State, Zip)"
+                                 "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s);",
+                                 (row["FirstName"], row["LastName"], row["DOB"], row["Phone"], row["Email"],
+                                  row["Address"], row["City"], row["State"], row["Zip"]))
+                db.commit()
+                employeeCount += 1
+    except KeyError:
+        print("ERROR in employees.csv. Make sure the columns are labeled appropriately.")
+        print("You should clear the Clients table, Pets table, and Shelters table before trying again.")
+        db.rollback()
+        exit()
+    except mysql.connector.Error as error:
+        print("ERROR: Use createTables.sql to create the Employees table.")
+        print("You should clear the Clients table, Pets table, and Shelters table before trying again.")
+        exit()
     # fill ClientToEmployee table
     for i in range(1, clientCount+1):
         mycursor.execute("INSERT INTO ClientToEmployee(ClientID,EmployeeID)"
                         "VALUES (%s,%s);",
-                        (i, randrange(1, employeeCount)))
+                        (i, randrange(1, employeeCount+1)))
         db.commit()
     # fill PetToShelter table
     for i in range(1, petCount+1):
         mycursor.execute("INSERT INTO PetToShelter(petID,shelterID)"
                         "VALUES (%s,%s);",
-                        (i, randrange(1, shelterCount)))
+                        (i, randrange(1, shelterCount+1)))
         db.commit()
     # fill EmployeeToShelter table
     for i in range(1, employeeCount+1):
         mycursor.execute("INSERT INTO EmployeeToShelter(employeeID,shelterID)"
                         "VALUES (%s,%s);",
-                        (i, randrange(1, shelterCount)))
+                        (i, randrange(1, shelterCount+1)))
         db.commit()
     # generate log data
     logGenerator.run()
+    mycursor.close()
+    db.close()
 
 
 # USER INPUT

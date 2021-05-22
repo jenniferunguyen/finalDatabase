@@ -2,13 +2,16 @@ import mysql.connector
 import datetime
 
 def run():
+    runF()
+    runA()
+
+def runF():
     db = mysql.connector.connect(
         host="34.94.78.23",
         user="IamRene",
         passwd="40*GermaN",
         database="Final"
     )
-
     mycursor = db.cursor()
 
     print("Generating history for Fostering...")
@@ -44,18 +47,31 @@ def run():
             usedClients.append(pair[1])
             matchesF.append(pair)
 
-    # insert into table
-    for m in matchesF:
-        mycursor.execute("INSERT INTO Fostering(PetID, ClientID, StartDate, EndDate)"
-                         "VALUES (%s,%s,%s,%s);",
-                         (m[0], m[1], m[2] + datetime.timedelta(days=14), m[2] + datetime.timedelta(days=35)))
-        db.commit()
+    try:
+        # insert into table
+        for m in matchesF:
+            mycursor.execute("INSERT INTO Fostering(PetID, ClientID, StartDate, EndDate)"
+                             "VALUES (%s,%s,%s,%s);",
+                             (m[0], m[1], m[2] + datetime.timedelta(days=14), m[2] + datetime.timedelta(days=35)))
+            db.commit()
+    except mysql.connector.Error as error:
+        print("ERROR: Use createTables.sql to create the Fostering table.")
+        print("Run the runF() command from logGenerator.py to populate the Fostering table")
+        exit()
 
     # change phase of fostered animals to adopting
     for m in matchesF:
         mycursor.execute("UPDATE Pets SET Phase = 'adopting' WHERE PetID = %s" % (m[0]))
         db.commit()
 
+def runA():
+    db = mysql.connector.connect(
+        host="34.94.78.23",
+        user="IamRene",
+        passwd="40*GermaN",
+        database="Final"
+    )
+    mycursor = db.cursor()
     print("Generating history for Adoptions...")
 
     # select eligible pets for adoptions
@@ -89,12 +105,17 @@ def run():
             usedClients.append(pair[1])
             matchesA.append(pair)
 
-    # insert into table
-    for m in matchesA:
-        mycursor.execute("INSERT INTO Adoptions(PetID, ClientID, Date)"
-                         "VALUES (%s,%s,%s);",
-                         (m[0], m[1], m[2] + datetime.timedelta(days=3)))
-        db.commit()
+    try:
+        # insert into table
+        for m in matchesA:
+            mycursor.execute("INSERT INTO Adoptions(PetID, ClientID, Date)"
+                             "VALUES (%s,%s,%s);",
+                             (m[0], m[1], m[2] + datetime.timedelta(days=3)))
+            db.commit()
+    except mysql.connector.Error as error:
+        print("ERROR: Use createTables.sql to create the Adoptions table.")
+        print("Run the runA() command from logGenerator.py to populate the Adoption table")
+        exit()
 
     # soft delete adopted pets
     for m in matchesA:
@@ -102,8 +123,6 @@ def run():
         db.commit()
         mycursor.execute("UPDATE PetToShelter SET Deleted = TRUE WHERE PetID = %s" % (m[0]))
         db.commit()
-
-    print("Success!")
 
 
 
